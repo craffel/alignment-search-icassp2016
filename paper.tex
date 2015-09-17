@@ -29,7 +29,55 @@ Dynamic Time Warping, Audio to MIDI Alignment, Sequence Retrieval, Bayesian Opti
 \section{Introduction}
 \label{sec:intro}
 
-\cite{hu2003polyphonic}
+Why is MIDI to audio alignment important?  Matching?
+
+Systems which do alignment
+
+Systems which do matching \cite{hu2003polyphonic} plus KDD literature
+
+\section{DTW-Based Alignment}
+
+Formal definition of DTW-based alignment, with parameter and representation discussion
+
+Discussion of extracting a confidence score, normalization methods
+
+\section{Creating a Synthetic Alignment Dataset}
+
+Collection of MIDI files
+
+``Easy'' corruption, for alignment accuracy
+
+``Hard'' corruption, for matching accuracy
+
+\section{Optimizing DTW-Based Alignment}
+
+Short overview of Bayesian optimization
+
+Parameter space (including multiplicative penalty)
+
+Random trials
+
+Discussion of best-performing aligners; also best aligner with beats
+
+\section{Optimizing Confidence Reporting}
+
+Grid search
+
+Statistical tests used
+
+Choosing the best alignment scheme (with algorithm box?)
+
+\section{Qualitative Evaluation}
+
+Data preparation
+
+Evaluation criteria
+
+Results
+
+\section{Avenues for Improvement}
+
+Augmentation with MUDA, partial alignments, robustness to missing instruments, re-training specifically on subsequences
 
 \bibliographystyle{IEEEbib}
 \bibliography{refs}
