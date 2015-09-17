@@ -13,17 +13,17 @@
 \maketitle
 
 \begin{abstract}
-The abstract should appear at the top of the left-hand column of text, about
-0.5 inch (12 mm) below the title area and no more than 3.125 inches (80 mm) in
-length.  Leave a 0.5 inch (12 mm) space between the end of the abstract and the
-beginning of the main text.  The abstract should contain about 100 to 150
-words, and should be identical to the abstract text submitted electronically
-along with the paper cover sheet.  All manuscripts must be in English, printed
-in black ink.
+Dynamic Time Warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of songs to corresponding MIDI transcriptions.
+The performance of DTW-based approaches in this domain is heavily effected by system design choices, such as the representation used for the audio and MIDI data and DTW's adjustable hyperparameters.
+We propose a method for optimizing the design of DTW-based alignment and matching systems.
+Our technique uses Bayesian optimization to tune system design and hyperparameters over a synthetically created dataset of audio and MIDI pairs.
+We then perform an exhaustive search over DTW score normalization techniques in order to determine an optimal method for reporting a reliable alignment confidence score, which is necessary for matching tasks.
+Using our approach, we are able to create a DTW-based system which is conceptually simple and highly accurate at both alignment and matching.
+We also verified that our system achieves high performance in a large-scale qualitative evaluation of results on real-world data.
 \end{abstract}
 
 \begin{keywords}
-One, two, three, four, five
+Dynamic Time Warping, Audio to MIDI Alignment, Sequence Retrieval, Bayesian Optimization, Hyperparameter Optimization
 \end{keywords}
 
 \section{Introduction}
