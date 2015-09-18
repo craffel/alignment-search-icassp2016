@@ -29,19 +29,41 @@ Dynamic Time Warping, Audio to MIDI Alignment, Sequence Retrieval, Bayesian Opti
 \section{Introduction}
 \label{sec:intro}
 
-Why is MIDI to audio alignment important?  Matching?
+MIDI files can provide a bounty of ground-truth data for content-based music information retrieval (MIR) tasks, including beat/bar tracking, onset detection, key estimation, automatic transcription, and score-informed source separation \cite{ewert2012towards, turetsky2003ground, ewert2014score, raffel2014pretty_midi}.
+However, in order to utilize this data, a given MIDI file must first be aligned in time to a recording of the piece it is a transcription of.
+A related problem is MIDI-to-audio matching, where we are given separate collections of MIDI and audio files and must determine which audio file (if any) each MIDI file corresponds to.
+This problem is motivated by the dearth of metadata information typically available in MIDI files, making any kind of text-based matching infeasible \cite{raffel2015large}.
+With or without useful metadata, it is beneficial to be able to produce a confidence score for alignment which communicates how well the content in a MIDI file matches a given audio file, which can help determine the transcription quality.
 
-Systems which do alignment
+Despite these tasks' complementary nature, most previous research has focused on systems meant for either alignment or matching.
+In the context of MIDI-to-audio alignment, a wide variety of techniques have been used, which typically involve determining a correspondence between discrete times in the audio and MIDI file.
+While approaches inspired by edit distance metrics such as Smith-Waterman \cite{ewert2012towards} and Needleman-Wunsch \cite{grachten2013automatic} have been used, arguably the most common approach is Dynamic Time Warping (DTW) \cite{muller2007dynamic}.
+First proposed for comparing speech utterances \cite{sakoe1978dynamic}, DTW uses dynamic programming to find a monotonic alignment such that the total distance between aligned feature vectors is minimized.
+This property makes it well-suited for audio-to-MIDI alignment when we expect that the MIDI is an accurate continuous transcription (i.e.\ without out-of-sequence or incorrect sections).
 
-Systems which do matching \cite{hu2003polyphonic} plus KDD literature
+A nice property of DTW is its appropriateness as a measure of the ``similarity'' between two sequences.
+This is thanks to the fact that the total distance between pairs of feature vectors in the DTW-based alignment can be used reliability as a distance metric.
+In fact, DTW has seen extensive use solely as a way of measuring sequence similarity in the data mining literature \cite{berndt1994using}.
+In the context of MIDI and audio files, \cite{hu2003polyphonic} evaluated the effectiveness DTW distance to match a small collection of Beatles MIDIs to recordings of Beatles songs.
+
+Despite its widespread use, DTW's success can be highly dependent on its exact formulation as well as system design choices such as the feature representation and local distance metric used.
+To our knowledge, there has been no large-scale quantitative comparison of different DTW-based alignment systems.
+This is likely due to the fact that evaluating its performance would require either a collection of MIDI and audio pairs for which the correct alignment is already known (which does not exist) or manual audition and rating of the output of the system (which is time-consuming).
+The present work aims to remedy this and produce a DTW-based alignment system which is optimal in terms of both alignment and matching accuracy.
+
+After giving an overview of typical DTW-based alignment systems (Section \ref{sec:dtw}), we propose a method for creating a synthetic dataset of MIDI-audio pairs by applying realistic corruptions to MIDI files, which allows us to know a priori the correct alignment (Section \ref{sec:synthetic}).
+We then tune hyperparameters for alignment using Bayesian optimization (Section \ref{sec:optimizing}) and for confidence reporting using an exhaustive search (Section \ref{sec:confidence}).
+Finally, we perform a large-scale qualitative evaluation of our proposed alignment system on real-world data (Section \ref{sec:qualitative}) and discuss possible avenues for improvement (Section \ref{sec:avenues}).
 
 \section{DTW-Based Alignment}
+\label{sec:dtw}
 
 Formal definition of DTW-based alignment, with parameter and representation discussion
 
 Discussion of extracting a confidence score, normalization methods
 
 \section{Creating a Synthetic Alignment Dataset}
+\label{sec:synthetic}
 
 Collection of MIDI files
 
@@ -50,6 +72,7 @@ Collection of MIDI files
 ``Hard'' corruption, for matching accuracy
 
 \section{Optimizing DTW-Based Alignment}
+\label{sec:optimizing}
 
 Short overview of Bayesian optimization
 
@@ -60,6 +83,7 @@ Random trials
 Discussion of best-performing aligners; also best aligner with beats
 
 \section{Optimizing Confidence Reporting}
+\label{sec:confidence}
 
 Grid search
 
@@ -68,6 +92,7 @@ Statistical tests used
 Choosing the best alignment scheme (with algorithm box?)
 
 \section{Qualitative Evaluation}
+\label{sec:qualitative}
 
 Data preparation
 
@@ -76,6 +101,7 @@ Evaluation criteria
 Results
 
 \section{Avenues for Improvement}
+\label{sec:avenues}
 
 Augmentation with MUDA, partial alignments, robustness to missing instruments, re-training specifically on subsequences
 
