@@ -1,5 +1,8 @@
 \documentclass{article}
 \usepackage{spconf,amsmath,graphicx}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
 
 \title{Optimizing DTW-Based Audio-to-MIDI Alignment and Matching}
 
@@ -58,9 +61,60 @@ Finally, we perform a large-scale qualitative evaluation of our proposed alignme
 \section{DTW-Based Alignment}
 \label{sec:dtw}
 
-Formal definition of DTW-based alignment, with parameter and representation discussion
+Suppose we are given two sequences of feature vectors $X \in \mathbb{R}^{M \times D}$ and $Y \in \mathbb{R}^{N \times D}$, where $D$ is the feature dimensionality and $M$ and $N$ are the number of feature vectors in $X$ and $Y$ respectively.
+Dynamic Time Warping produces two sequences $p, q \in \mathbb{N}^L$ which define the optimal alignment between $X$ and $Y$, such that $p[i] = n, q[i] = m$ implies that the $m$th feature vector in $X$ should be aligned to the $n$th in $Y$.
+In DTW, finding $p$ and $q$ involves solving the following minimization problem:
+$$
+p, q = \mathrm{arg}\min_{p, q} \sum_{i = 1}^{L} \|X[p[i]] - Y[q[i]]\|_2^2 + \Phi(i)
+$$
+where $\Phi(i)$ is $\phi$ when $p[i] = p[i - 1]$ or $q[i] = q[i - 1]$ and $0$ otherwise.
+$\phi \ge 0$ is a constant which is used to discourage ``non-diagonal moves'', i.e.\ indices in the path where one feature vector in one sequence is mapped to multiple vectors in the other.
+This minimization problem can be solved in $\mathcal{O}(MN)$ time using dynamic programming \cite{sakoe1978dynamic}.
+Once $p$ and $q$ are found, the original MIDI file can be adjusted so that events which occur at $t_X[p[i]]$ are moved to $t_Y[q[i]]$, where $t_X \in \mathbb{R}^M, t_Y \in \mathbb{R}^N$ are the times corresponding to the feature vectors in $X$ and $Y$ respectively.
 
-Discussion of extracting a confidence score, normalization methods
+Traditionally, DTW is constrained such that $p$ and $q$ span the entirety of $X$ and $Y$, i.e.\ $p[1] = q[1] = 1$ and $p[L] = N; q[L] = M$.
+However, audio-to-MIDI alignment typically allows subsequence matching (a desireable case, for example, when a MIDI file is a transcription of a portion of a song), where instead we only require that either $gN \le p[L] \le N$ or $gM \le q[L] \le M$.
+$g \in [0, 1]$ (the ``gully'') is a parameter which determines the proportion of the subsequence which must be successfully matched.
+In addition, the path is occasionally further constrained so that
+\begin{equation}
+q[i] - p[i] + R \le N, p[i] - q[i] + R \le M
+\end{equation}
+for $i \in \{1, \ldots, L\}$ where $R = g\min(M, N)$ is the ``radius'', sometimes called the Sakoe-Chiba band \cite{sakoe1978dynamic}.
+A further constraint on $p$ and $q$ is monotonicity, i.e.\ that
+$$
+p[i + 1] \ge p[i], q[i + 1] \ge q[i] \; \forall i
+$$
+This can be enforced by allowing a specific ``step pattern''; while many exist \cite{muller2007dynamic, sakoe1978dynamic}, to our knowledge the only pattern used in audio to MIDI alignment simply requires that
+$$
+(p[i + 1], q[i + 1]) \in \begin{cases}
+(p[i] + 1, q[i] + 1)\\
+(p[i], q[i] + 1)\\
+(p[i] + 1, q[i])
+\end{cases}
+$$
+
+From the above definition, it is clear that there are many design choices to be made when performing DTW-based audio-to-MIDI alignment:
+\begin{description}[topsep=1pt,itemsep=-1pt,leftmargin=5pt]
+\item[Feature representation ($X$ and $Y$):] Prior to alignment, audio and MIDI sequences must be converted to a common mid-level representation.
+This is typically done by synthesizing the MIDI file to obtain an audio signal and computing a common spectral transform of the audio recording and synthesized MIDI audio.
+Chroma vectors, which represent the amount of energy in each semitone summed across octaves \cite{fujishima1999realtime}, are a common choice \cite{hu2003polyphonic, ewert2012towards}.
+A constant-Q transform (CQT), which represents the amount of energy in logarithmically spaced bins \cite{brown1991calculation} has also been used \cite{raffel2015large, dixon2005match, ellis2013aligning}.
+Occasionally, log-magnitude features are used in order to more closely mimic human perception \cite{raffel2015large, ellis2013aligning, turetsky2003ground}.
+In \cite{turetsky2003ground} and \cite{hu2003polyphonic} it is noted that Mel-Frequency Cepstral Coefficients result in poor performance for music signals because they discard pitch information.
+\item[Time scale ($t_X$ and $t_Y$):] Feature vectors are frequently computed over short, overlapping frames of audio \cite{dixon2005match, turetsky2003ground, hu2003polyphonic}.
+Note that the spacing between feature vectors must be sufficiently small compared to the auditory temporal resolution, e.g.\ tens of milliseconds \cite{blauert1997spatial}.
+Occasionally, beat-synchronous feature vectors are used \cite{raffel2015large,ellis2013aligning}, which can dramatically reduce computation time and can produce perceptually accurate alignments provided that the beat tracking is correct.
+\item[Normalization:] In \cite{rakthanmanon2012searching}, it is argued that z-scoring (standardizing) the feature sequences is critical for data mining applications of DTW, which was used in audio-to-MIDI alignment in \cite{hu2003polyphonic}.
+In addition, various normalizations have been applied to the feature vectors in $X$ and $Y$ before computing their local distances.
+A common choice is normalizing by each vector by its $L^2$ norm, which effectively results in the local distance being the cosine distance \cite{turetsky2003ground, ewert2012towards, raffel2015large, ellis2013aligning}.
+\item[Penalty ($\phi$):] In many applications of DTW to audio-to-MIDI alignment, no additive penalty is used, which corresponds to setting $\phi = 0$.
+However, as long as the MIDI and audio files have consistent tempi, non-diagonal moves should be discouraged.
+In addition, it has been argued \cite{raffel2015large} that when the constraint $p[1] = 1, q[1] = 1$ is not enforced (which allows subsequence alignment), an additive penalty can be crucial to ensure that the entire subsequence is used, and so $\phi$ is set to the 90th percentile of the distances $\|X[n] - Y[m]\|_2^2$ for $m \in \{1, \ldots, M\}; n \in \{1, \ldots, N\}$.
+In \cite{ellis2013aligning}, a fixed value of $\phi = .5$ is used.
+\item[Gully ($g$) and band path constraint:] As with $\phi$, the ``gully'' and band path constraint are often omitted, which corresponds to setting $g = 1$.
+A value of $g$ which is close to 1 will afford some tolerance to the possibility that the beginning or end of the MIDI transcription is incorrect (e.g.\ a fade-out or lead-in), so \cite{ellis2013aligning} sets $g = .7$ and \cite{raffel2015large} sets $g = .95$.
+In data mining applications \cite{ratanamahatana2004everything} it is argued that the band radius path constraint both reduces computational complexity and results in more reliable alignments by avoiding paths with many of non-diagonal moves.
+\end{description}
 
 \section{Creating a Synthetic Alignment Dataset}
 \label{sec:synthetic}
