@@ -119,14 +119,39 @@ In data mining applications \cite{ratanamahatana2004everything} it is argued tha
 \section{Creating a Synthetic Alignment Dataset}
 \label{sec:synthetic}
 
-Collection of MIDI files
+From the discussion above, it is clear that there is a large space of hyperparameters (design choices) for DTW-based audio-to-MIDI alignment systems.
+To our knowledge, previous researchers have mainly manually tuned alignment hyperparameters based on a small test set of MIDI/audio pairs and have chosen the system which gives good qualitative results by audition of the aligned MIDI data.
+Because this method only facilitates small-scale comparisons, there is an obvious question of what hyperparameter settings would yield the best general-purpose alignment system.
+Unfortunately, manual audition of even a tiny subset of possible hyperparameter settings on a modestly-sized collection of paired MIDI and audio files is infeasible, let alone a collection large enough to make substantive judgements about the general performance of a given system.
+Furthermore, automatic evaluation has not been an option due to the lack of a ground-truth dataset of ``correct'' alignments.
+We therefore propose a method for synthetically creating a collection of MIDI/audio pairs by applying a series of corruptions to MIDI files which mimic real-world data.
+When applying the corruptions, we keep track of the correct adjustments needed to restore the corrupted MIDIs back to the correct timebase, which facilitates automatic comparison and allows us to rapidly and automatically a huge number of possible systems.
 
-``Easy'' corruption, for alignment accuracy
+To create this dataset, we first collected 1,000 MIDI files which were transcriptions of Western popular music songs.
+We then applied the following series of transformations, based on our experience with common differences between MIDI transcriptions and audio recordings: 
+First, to simulate differences in tempo, we adjusted the timing in each MIDI file by a low-frequency length-$N$ random signal, generated as
+$$
+r[n] = \sum_{k = 0}^{N - 1} \mathcal{N}(0, \sigma_t) e^{j2\pi kn/N - n}, n \in \{1, \ldots, N\}
+$$
+i.e.\ the inverse Fourier transform of an exponentially decaying Gaussian-distributed random spectra with standard deviation $\sigma_r$.
+Second, the first 10\% and last 10\% of the transcription were each cropped out with probability 50\%, which simulates the MIDI file being an incomplete transcription.
+In addition, 1\% of the transcription was cut out at a random location with 10\% probability, which simulates a missing measure.
+Third, because it is common for a MIDI transcription to be missing an instrument (for example, karaoke versions of songs are frequently distributed as MIDI files, which do not contain a vocal instrument), we removed each instrument track in each MIDI file with probability $p_r$, making sure to never remove all instruments.
+Fourth, in all MIDI files, we randomly added 1 or -1 to the program number of each instrument.
+This simulated the fact that when comparing a synthesized MIDI file to an audio recording, the timbre of a synthesized MIDI instrument is always somewhat different from its real-world counterpart.
+Finally, for each note in each instrument, we multiplied the velocity by a random number sampled from $\mathcal{N}(1, \sigma_v)$ while keeping it in the MIDI velocity range $[1, 127]$.
+This was meant to further simulate differences in instrument characteristics in real-world vs. synthesized songs, and also simulated missing notes for large $\sigma_v$.
+All MIDI data manipulations were realized with \texttt{pretty\char`_midi} \cite{raffel2014pretty_midi}.
 
-``Hard'' corruption, for matching accuracy
+As described in Section \ref{sec:intro}, a DTW-based alignment system can serve two purposes: First, to align a MIDI transcription in time to an audio recording, and second, to produce a confidence score denoting the quality of the transcription or whether the MIDI file is a transcription of the recording at all.
+We therefore produced two sets of corrupted version of the 1,000 MIDI files we collected, one each to measure the performance for alignment and confidence reporting.
+For the first (``easy'') set, we focused on corruption parameters corresponding to real-world conditions for a high-quality transcription, setting $\sigma_t = 5, p_r = .1, \sigma_v = .2$.
+For the second (``hard''), we set the corruption parameters so that the transcription was likely no longer valid, setting $\sigma_t = 20, p_r = .5, \sigma_v = 1$.
 
 \section{Optimizing DTW-Based Alignment}
 \label{sec:optimizing}
+
+Given the framework described above for generating a synthetic alignment dataset, 
 
 Short overview of Bayesian optimization
 
