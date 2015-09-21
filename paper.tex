@@ -17,9 +17,9 @@
 
 \begin{abstract}
 Dynamic Time Warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of songs to corresponding MIDI transcriptions.
-The performance of DTW-based approaches in this domain is heavily effected by system design choices, such as the representation used for the audio and MIDI data and DTW's adjustable hyperparameters.
+The performance of DTW-based approaches in this domain is heavily effected by system design choices, such as the representation used for the audio and MIDI data and DTW's adjustable parameters.
 We propose a method for optimizing the design of DTW-based alignment and matching systems.
-Our technique uses Bayesian optimization to tune system design and hyperparameters over a synthetically created dataset of audio and MIDI pairs.
+Our technique uses Bayesian optimization to tune system design and parameters over a synthetically created dataset of audio and MIDI pairs.
 We then perform an exhaustive search over DTW score normalization techniques in order to determine an optimal method for reporting a reliable alignment confidence score, which is necessary for matching tasks.
 Using our approach, we are able to create a DTW-based system which is conceptually simple and highly accurate at both alignment and matching.
 We also verified that our system achieves high performance in a large-scale qualitative evaluation of results on real-world data.
@@ -49,13 +49,13 @@ This is thanks to the fact that the total distance between pairs of feature vect
 In fact, DTW has seen extensive use solely as a way of measuring sequence similarity in the data mining literature \cite{berndt1994using}.
 In the context of MIDI and audio files, \cite{hu2003polyphonic} evaluated the effectiveness DTW distance to match a small collection of Beatles MIDIs to recordings of Beatles songs.
 
-Despite its widespread use, DTW's success can be highly dependent on its exact formulation as well as system design choices such as the feature representation and local distance metric used.
+Despite its widespread use, DTW's success can be highly dependent on its exact formulation as well as system design choices such as the feature representation and the local distance metric used.
 To our knowledge, there has been no large-scale quantitative comparison of different DTW-based alignment systems.
 This is likely due to the fact that evaluating its performance would require either a collection of MIDI and audio pairs for which the correct alignment is already known (which does not exist) or manual audition and rating of the output of the system (which is time-consuming).
 The present work aims to remedy this and produce a DTW-based alignment system which is optimal in terms of both alignment and matching accuracy.
 
 After giving an overview of typical DTW-based alignment systems (Section \ref{sec:dtw}), we propose a method for creating a synthetic dataset of MIDI-audio pairs by applying realistic corruptions to MIDI files, which allows us to know a priori the correct alignment (Section \ref{sec:synthetic}).
-We then tune hyperparameters for alignment using Bayesian optimization (Section \ref{sec:optimizing}) and for confidence reporting using an exhaustive search (Section \ref{sec:confidence}).
+We then tune parameters for alignment using Bayesian optimization (Section \ref{sec:optimizing}) and for confidence reporting using an exhaustive search (Section \ref{sec:confidence}).
 Finally, we perform a large-scale qualitative evaluation of our proposed alignment system on real-world data (Section \ref{sec:qualitative}) and discuss possible avenues for improvement (Section \ref{sec:avenues}).
 
 \section{DTW-Based Alignment}
@@ -113,16 +113,16 @@ In addition, it has been argued \cite{raffel2015large} that when the constraint 
 In \cite{ellis2013aligning}, a fixed value of $\phi = .5$ is used.
 \item[Gully ($g$) and band path constraint:] As with $\phi$, the ``gully'' and band path constraint are often omitted, which corresponds to setting $g = 1$.
 A value of $g$ which is close to 1 will afford some tolerance to the possibility that the beginning or end of the MIDI transcription is incorrect (e.g.\ a fade-out or lead-in), so \cite{ellis2013aligning} sets $g = .7$ and \cite{raffel2015large} sets $g = .95$.
-In data mining applications \cite{ratanamahatana2004everything} it is argued that the band radius path constraint both reduces computational complexity and results in more reliable alignments by avoiding paths with many of non-diagonal moves.
+In data mining applications \cite{ratanamahatana2004everything} it is argued that the band radius path constraint both reduces computational complexity and results in more reliable alignments by avoiding paths with many non-diagonal moves.
 \end{description}
 
 \section{Creating a Synthetic Alignment Dataset}
 \label{sec:synthetic}
 
-From the discussion above, it is clear that there is a large space of hyperparameters (design choices) for DTW-based audio-to-MIDI alignment systems.
-To our knowledge, previous researchers have mainly manually tuned alignment hyperparameters based on a small test set of MIDI/audio pairs and have chosen the system which gives good qualitative results by audition of the aligned MIDI data.
-Because this method only facilitates small-scale comparisons, there is an obvious question of what hyperparameter settings would yield the best general-purpose alignment system.
-Unfortunately, manual audition of even a tiny subset of possible hyperparameter settings on a modestly-sized collection of paired MIDI and audio files is infeasible, let alone a collection large enough to make substantive judgements about the general performance of a given system.
+From the discussion above, it is clear that there is a large space of parameter settings/design choices for DTW-based audio-to-MIDI alignment systems.
+To our knowledge, previous researchers have mainly manually tuned alignment parameters based on a small test set of MIDI/audio pairs and have chosen the system which gives good qualitative results by audition of the aligned MIDI data.
+Because this method only facilitates small-scale comparisons, there is an obvious question of what parameter settings would yield the best general-purpose alignment system.
+Unfortunately, manual audition of even a tiny subset of possible parameter settings on a modestly-sized collection of paired MIDI and audio files is infeasible, let alone a collection large enough to make substantive judgements about the general performance of a given system.
 Furthermore, automatic evaluation has not been an option due to the lack of a ground-truth dataset of ``correct'' alignments.
 We therefore propose a method for synthetically creating a collection of MIDI/audio pairs by applying a series of corruptions to MIDI files which mimic real-world data.
 When applying the corruptions, we keep track of the correct adjustments needed to restore the corrupted MIDIs back to the correct timebase, which facilitates automatic comparison and allows us to rapidly and automatically a huge number of possible systems.
