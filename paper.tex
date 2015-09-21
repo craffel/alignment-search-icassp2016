@@ -12,7 +12,7 @@
     New York, NY}
 
 \begin{document}
-
+\ninept
 \maketitle
 
 \begin{abstract}
@@ -151,15 +151,47 @@ For the second (``hard''), we set the corruption parameters so that the transcri
 \section{Optimizing DTW-Based Alignment}
 \label{sec:optimizing}
 
-Given the framework described above for generating a synthetic alignment dataset, 
+Given a dataset of MIDI/audio pairs where we know a priori the correct alignment, we can rapidly evaluate the performance of a given alignment scheme by aligning each pair and computing the mean absolute alignment error.
+In the present setting, computing the mean error quantifies the extent to which the alignment was able to remove the timing distortions (random warping and cropping) described in Section \ref{sec:synthetic}.
+When the alignment has failed for a portion of the song, the error between the mapped times and the correct times may be very large, so we clip the mean error to $.5$ seconds (which essentially denotes an error threshold above which all local alignment discrepencies are equally incorrect).
+This results in the following metric for computing the accuracy of a given alignment scheme on a given MIDI/audio pair:
+$$
+\frac{1}{L}\sum_{i = 1}^{L} \min(|t_X[p[i]] - \hat{t}_X[q[i]]|, .5)
+$$
+where $\hat{t}_X$ is the ground-truth correct aligned timing.
+To compute the accuracy of a given alignment system, we can compute the mean of this metric accross all pairs in the dataset.
 
-Short overview of Bayesian optimization
+The ability to rapidly evaluate an alignment system allows us to perform large-scale comparisons of different parameter settings.
+To decide which parameter settings to evaluate, we use Bayesian optimization, which treats the process of tuning parameters to achieve different accuracies as a Gaussian process.
+Using this formulation, Bayesian optimization can automatically propose new alignment systems based on the performance of previously evaluated systems.
+As a performance objective, we used the mean of mean absolute errors across the entire ``easy'' alignment dataset.
+A more thorough discussion can be found in \cite{snoek2012practical}, which is the framework we used in this experiment.
 
-Parameter space (including multiplicative penalty)
+Before applying Bayesian optimization, we must define a parameter space to search over.
+Based on the design choices outlined in Section \ref{sec:dtw}, we chose the following parameter space:
+\begin{description}[topsep=1pt,itemsep=-1pt,leftmargin=5pt]
+\item[Feature representation:] We used either chroma vectors or constant-Q spectra.
+The constant-Q spectra spanned 4 octaves, starting from MIDI note C3 (65.4 Hz) with 12 bins per octave.
+In preliminary experiments, we found that all of the best-performing alignment systems used log-magnitude features regardless of whether chroma vectors or constant-Q spectra were used, so we computed log-magnitude features in all experiments.
+\item[Time scale:] We either computed feature vectors every 46 milliseconds or utilized beat-synchronous features.
+\item[Normalization:] We optionally z-scored the feature vectors, and normalized feature vectors by their $L^1$, $L^2$, $L^\infty$ (max) norm, or not at all.
+\item[Penalty:] For the penalty, we optimized a scale in $[0, 3]$ to apply to the median distance between all pairs of feature vectors in $X$ and $Y$.
+Using the median distance made this penalty adaptive to different feature representations and normalization schemes.
+\item[Gully and band path constraint:] We allowed the gully to take any value in $[0, 1]$ and optionally enforced the band path constraint (Sakoe-Chiba band).
+\end{description}
+This space subsumes most of the systems discussed in Section \ref{sec:dtw}.
+All feature extraction was realized with \texttt{librosa} \cite{mcfee2015librosa}.
 
-Random trials
+When performing Bayesian optimization, it is helpful to ``seed'' the optimization with objective values for many randomly-chosen parameter settings to ensure that the optimization thoroughly explores the possible parameter space.
+We computed the accuracy for 10,000 randomly configured alignment systems and seeded the optimizer with the 100 systems which achieved the lowest mean error.
+In order to avoid local minima in the parameter space, we carried out 10 separate Bayesian optimization runs with 100 trials each, resulting in 1,000 total trials.
 
-Discussion of best-performing aligners; also best aligner with beats
+The best-performing alignment system achieved an objective value of $0.0181$, meaning that the average absolute error across the entire dataset was about 18 milliseconds.
+This is both within the upper range of the auditory temporal resolution and less than half of the time-scale resolution used for non-beat-synchronous feature vectors, so attaining a higher accuracy is likely unrealistic.
+As a high-level overview of the results, there were 34 systems which achieved an objective value less than $0.0185$; none of these systems used beat-synchronization or a path constraint and all of them used log-magnitude constant-Q spectra as a feature representation.
+All of the best-performing systems set the penalty median scale close to 1 and the ``gully'' parameter was also uniformly close to 1.
+Almost all of these systems used $L^2$ normalization (resulting in a cosine distance for local feature comparisons); a few used $L^1$ normalization.
+Whether z-scoring was applied or not varied uniformly across these systems.
 
 \section{Optimizing Confidence Reporting}
 \label{sec:confidence}
