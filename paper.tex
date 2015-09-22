@@ -214,13 +214,22 @@ Then, for every alignment system generated during our Bayesian optimization tria
 Finally, we computed the Kendall rank correlation coefficient \cite{kendall1938new} between each confidence score and the mean absolute error produced by all alignment systems for every alignment pair in both datasets.
 A high correlation for a given confidence score for a given alignment system would indicate that the system is able to accurately report the quality of its alignments.
 
-Among the 51 systems which were not significantly different from the highest-accuracy system on the ``easy'' dataset, the highest achieved correlation was .7098.
+Among the 51 systems which were not significantly different from the highest-accuracy system on the ``easy'' dataset, the highest achieved correlation was 0.710.
 In general, the high-accuracy systems all produced rank correlations which were close to this value.
 All of the systems achieved the highest correlation when including the penalties in the score calculation, normalizing by the path length, and normalizing by the mean distance across the aligned portions.
 This suggests that these steps are helpful for producing a reliable confidence score.
 
+As a final step in producing a ``gold standard'' alignment system, we decided to find parameter settings which were easier to report and implement but nevertheless produced alignments and confidence scores which were not significantly different than the best systems.
+We chose the following design: For a feature representation, we used log-magnitude constant-Q transforms computed on the non-beat-synchronous time scale described in Section \ref{sec:optimizing}.
+We normalized the spectra by their $L^2$ norm and did not z-score them.
+We chose a penalty $\phi$ as the median distance of all pairs of frames and used a gully parameter $g$ of $0.96$.
+This system achieved an alignment accuracy on the ``easy'' dataset of 0.0188, with alignment errors which were not significantly different from the best-performing system.
+By normalizing the DTW distance (including penalties) by the path length and the mean distance across aligned portions, we achieved a correlation of 0.700.
+This system is straightforward to implement, and will be used for the remainder of this work.
+
 \section{Qualitative Evaluation of Real-World Data}
 \label{sec:qualitative}
+
 
 Data preparation
 
