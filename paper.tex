@@ -128,7 +128,7 @@ We therefore propose a method for synthetically creating a collection of MIDI/au
 When applying the corruptions, we keep track of the correct adjustments needed to restore the corrupted MIDIs back to the correct timebase, which facilitates automatic comparison and allows us to rapidly and automatically a huge number of possible systems.
 
 To create this dataset, we first collected 1,000 MIDI files which were transcriptions of Western popular music songs.
-We then applied the following series of transformations, based on our experience with common differences between MIDI transcriptions and audio recordings: 
+We then applied the following series of transformations, based on our experience with common differences between MIDI transcriptions and audio recordings:
 First, to simulate differences in tempo, we adjusted the timing in each MIDI file by a low-frequency length-$N$ random signal, generated as
 $$
 r[n] = \sum_{k = 0}^{N - 1} \mathcal{N}(0, \sigma_t) e^{j2\pi kn/N - n}, n \in \{1, \ldots, N\}
@@ -188,21 +188,38 @@ In order to avoid local minima in the parameter space, we carried out 10 separat
 
 The best-performing alignment system achieved an objective value of $0.0181$, meaning that the average absolute error across the entire dataset was about 18 milliseconds.
 This is both within the upper range of the auditory temporal resolution and less than half of the time-scale resolution used for non-beat-synchronous feature vectors, so attaining a higher accuracy is likely unrealistic.
-As a high-level overview of the results, there were 34 systems which achieved an objective value less than $0.0185$; none of these systems used beat-synchronization or a path constraint and all of them used log-magnitude constant-Q spectra as a feature representation.
-All of the best-performing systems set the penalty median scale close to 1 and the ``gully'' parameter was also uniformly close to 1.
+To find systems with comparably high performance, we performed a one-sample $t$-test to determine whether the difference between pairwise alignment errors from a given alignment system and those from the best system was significantly different than 0.
+By using a test on the per-pair scores rather than the mean error across all pairs we achieve better robustness to outliers.
+We considered an alignment system to not be significantly different from the best system if the $p$-value was greater than $.05$, which resulted in 51 alignment systems.
+
+As a high-level overview of these systems, none used beat-synchronization or a path constraint and all of them used log-magnitude constant-Q spectra as a feature representation and set both the penalty median scale and ``gully'' close to 1.
 Almost all of these systems used $L^2$ normalization (resulting in a cosine distance for local feature comparisons); a few used $L^1$ normalization.
-Whether z-scoring was applied or not varied uniformly across these systems.
+Whether z-scoring was applied or not varied.
 
 \section{Optimizing Confidence Reporting}
 \label{sec:confidence}
 
-Grid search
+Having found alignment systems which achieve high accuracy on the ``easy'' dataset, the question remains which of these systems can produce a reliable confidence score for a given alignment and how best to compute it.
+As described in Section \ref{sec:dtw}, DTW provides a ``raw'' distance by simply summing the distances between all aligned feature vectors.
+This metric is inappropriate, however, when the number of aligned feature vectors varies from song to song; in this setting, the mean distance is usually used instead of the total distance.
+Furthermore, it is not immediately clear whether to include the non-diagonal path penalties $\phi$ in this distance.
+Finally, in \cite{raffel2015large} it is advocated to further normalize this distance by
+$$
+\frac{1}{L^2} \sum_{i = \min(p)}^{\max(p)} \sum_{j = \min(q)}^{\max(q)} \|X[i] - Y[j]\|_2^2
+$$
+i.e.\ the mean distance between all pairs of frames over the entire aligned portion of both feature sequences.
 
-Statistical tests used
+To choose an optimal confidence score reporting method, we first aligned all of the MIDI/audio pairs in both the ``hard'' and ``easy'' datasets.
+Then, for every alignment system generated during our Bayesian optimization trials, we computed the confidence score for every MIDI/audio pair using all combinations of the normalization schemes listed above (resulting in 8 possible confidence scores per file pair).
+Finally, we computed the Kendall rank correlation coefficient \cite{kendall1938new} between each confidence score and the mean absolute error produced by all alignment systems for every alignment pair in both datasets.
+A high correlation for a given confidence score for a given alignment system would indicate that the system is able to accurately report the quality of its alignments.
 
-Choosing the best alignment scheme (with algorithm box?)
+Among the 51 systems which were not significantly different from the highest-accuracy system on the ``easy'' dataset, the highest achieved correlation was .7098.
+In general, the high-accuracy systems all produced rank correlations which were close to this value.
+All of the systems achieved the highest correlation when including the penalties in the score calculation, normalizing by the path length, and normalizing by the mean distance across the aligned portions.
+This suggests that these steps are helpful for producing a reliable confidence score.
 
-\section{Qualitative Evaluation}
+\section{Qualitative Evaluation of Real-World Data}
 \label{sec:qualitative}
 
 Data preparation
