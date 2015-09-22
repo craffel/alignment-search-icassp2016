@@ -56,7 +56,7 @@ The present work aims to remedy this and produce a DTW-based alignment system wh
 
 After giving an overview of typical DTW-based alignment systems (Section \ref{sec:dtw}), we propose a method for creating a synthetic dataset of MIDI-audio pairs by applying realistic corruptions to MIDI files, which allows us to know a priori the correct alignment (Section \ref{sec:synthetic}).
 We then tune parameters for alignment using Bayesian optimization (Section \ref{sec:optimizing}) and for confidence reporting using an exhaustive search (Section \ref{sec:confidence}).
-Finally, we perform a large-scale qualitative evaluation of our proposed alignment system on real-world data (Section \ref{sec:qualitative}) and discuss possible avenues for improvement (Section \ref{sec:avenues}).
+Finally, we perform a large-scale qualitative evaluation of our proposed alignment system on real-world data and discuss possible avenues for improvement (Section \ref{sec:qualitative}).
 
 \section{DTW-Based Alignment}
 \label{sec:dtw}
@@ -153,7 +153,7 @@ For the second (``hard''), we set the corruption parameters so that the transcri
 
 Given a dataset of MIDI/audio pairs where we know a priori the correct alignment, we can rapidly evaluate the performance of a given alignment scheme by aligning each pair and computing the mean absolute alignment error.
 In the present setting, computing the mean error quantifies the extent to which the alignment was able to remove the timing distortions (random warping and cropping) described in Section \ref{sec:synthetic}.
-When the alignment has failed for a portion of the song, the error between the mapped times and the correct times may be very large, so we clip the mean error to $.5$ seconds (which essentially denotes an error threshold above which all local alignment discrepencies are equally incorrect).
+When the alignment has failed for a portion of the song, the error between the mapped times and the correct times may be very large, so we clip the mean error to $.5$ seconds (which essentially denotes an error threshold above which all local alignment discrepancies are equally incorrect).
 This results in the following metric for computing the accuracy of a given alignment scheme on a given MIDI/audio pair:
 $$
 \frac{1}{L}\sum_{i = 1}^{L} \min(|t_X[p[i]] - \hat{t}_X[q[i]]|, .5)
@@ -225,22 +225,52 @@ We normalized the spectra by their $L^2$ norm and did not z-score them.
 We chose a penalty $\phi$ as the median distance of all pairs of frames and used a gully parameter $g$ of $0.96$.
 This system achieved an alignment accuracy on the ``easy'' dataset of 0.0188, with alignment errors which were not significantly different from the best-performing system.
 By normalizing the DTW distance (including penalties) by the path length and the mean distance across aligned portions, we achieved a correlation of 0.700.
-This system is straightforward to implement, and will be used for the remainder of this work.
+This ``gold standard'' system is straightforward to implement, and will be used for the remainder of this work.
 
 \section{Qualitative Evaluation of Real-World Data}
 \label{sec:qualitative}
 
+In the experiments described above, we have found a system which can achieve both high accuracy and useful confidence reporting on synthetic data.
+To determine its applicability outside of synthetic contexts, we performed a large-scale qualitative evaluation on real-world data.
+The dataset used was a subset of 500 MIDI/audio pairs from the ``clean MIDI dataset'' \cite{raffel2015large}, obtained by matching MIDI files with reliable metadata to entries in the Million Song Dataset via a fuzzy text match.
+This collection comprises MIDI files with a full range of transcription qualities, and includes some pairs which are incorrectly matched due to failure of the text matching procedure.
+By manually evaluating whether each resulting alignment was successful, we can determine how accurately it performs alignments and how reliable the reported confidence scores are.
 
-Data preparation
+After aligning all pairs in this dataset using the ``gold standard'' system, we synthesized the resulting aligned MIDI files and created stereo recordings which consisted of the aligned synthesized MIDI audio in one channel and the original audio recording in the other.
+We then listened to each aligned MIDI pair and annotated a score from 1-5 according to the alignment accuracy, as follows:
+\begin{enumerate}[topsep=1pt,itemsep=-1pt]
+\item MIDI and audio file are incorrectly matched
+\item Alignment failed due to major differences
+\item Alignment was mostly successful with minor issues
+\item Perfect alignment with minor transcription issues
+\item Perfect alignment and transcription
+\end{enumerate}
+For example, if a MIDI transcription was matched and successfully aligned to the correct song but was missing a transcription of the song's vocals, a rating of 4 would be given; if the missing vocals caused the alignment to sound ``sloppy'', the rating would be 3 instead.
 
-Evaluation criteria
+\begin{figure}[t]
+  \label{fig:violin}
+  \centering
+  \includegraphics[width=\columnwidth]{violin.pdf}
+  \caption{Violin plot showing the distribution of confidence scores for each rating in our qualitative evaluation.
+A smaller confidence score indicates a more successful alignment.
+The area of each violin corresponds to the number of pairs which had a given rating.
+Box plots in each violin show the median and upper and lower quartiles.}
+\end{figure}
 
-Results
+Figure \ref{fig:violin} shows the distributions of confidence scores for pairs assigned each of the five ratings.
+In an ideal world, all MIDI and audio files would be paired correctly, and all MIDI transcriptions would be perfect.
+However, apart from encountering many incorrect pairs (all of those rated 1), we also found that various transcription issues prevented successful alignments.
+The most common issue resulting in a score of 2 was that the wrong section of the MIDI transcription was chosen to match the audio file, which was often due to very different instrumentation, different keys, or different versions (e.g.\ the audio recording was a live version).
+Many pairs rated 3 had multiple missing instruments, many musical embellishments, or in some rare cases, were transcribed at the wrong tempo.
+In addition, the large overlap between the confidence scores for pairs rated 4 and 5 indicates that our confidence score is largely invariant to minor transcription issues, which is not ideal.
+The most common transcription issue for pairs rated 4 was a single missing instrument or minor embellishments, both of which most frequently effected the vocal track.
 
-\section{Avenues for Improvement}
-\label{sec:avenues}
-
-Augmentation with MUDA, partial alignments, robustness to missing instruments, re-training specifically on subsequences
+Despite these issues, our ``gold standard'' alignment system was able to successfully align most correctly matched pairs and produced an extremely reliable confidence score.
+In fact, if we consider ``correct'' matches to be those rated 3, 4, or 5, the resulting confidence scores afford an area under the ROC curve of 0.983 (95\% confidence interval [.973, .991], calculated by 1000-sample bootstrap), indicating a highly reliable metric.
+Unfortunately, there were a few pairs which were rated 1 or 2 but nevertheless had a small normalized DTW score (indicating a successful alignment) visible as outliers in Figure \ref{fig:violin}; without these outliers, we could more confidently use a higher threshold below which alignments could safely be considered correct.
+Besides this, the main avenue for improving the system would be to determine a way to make the confidence score more sensitive to missing instruments and musical embellishments.
+Nevertheless, through our large-scale optimization over synthetic data, we have designed a DTW-based system which is simple to implement and achieves accurate and reliable results for both alignment and matching.
+A high-level discussion of these results, with more figures and an implementation example of our ``gold standard'' system, is available online\footnote{abc}, as is all of the code used in these experiments \footnote{xyz}.
 
 \bibliographystyle{IEEEbib}
 \bibliography{refs}
