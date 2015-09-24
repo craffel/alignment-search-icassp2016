@@ -80,18 +80,7 @@ $$
 q[i] - p[i] + R \le N, p[i] - q[i] + R \le M
 $$
 for $i \in \{1, \ldots, L\}$ where $R = g\min(M, N)$ is the ``radius'', sometimes called the Sakoe-Chiba band \cite{sakoe1978dynamic}.
-A further constraint on $p$ and $q$ is monotonicity, i.e.\ that
-$$
-p[i + 1] \ge p[i], q[i + 1] \ge q[i] \; \forall i
-$$
-This can be enforced by allowing a specific ``step pattern''; while many exist \cite{muller2007dynamic, sakoe1978dynamic}, to our knowledge the only pattern used in audio to MIDI alignment simply requires that
-$$
-(p[i + 1], q[i + 1]) \in \begin{cases}
-(p[i] + 1, q[i] + 1)\\
-(p[i], q[i] + 1)\\
-(p[i] + 1, q[i])
-\end{cases}
-$$
+A further constraint on $p$ and $q$ is monotonicity; audio to MIDI alignment systems typically enforce this by requiring $p[i + 1] = p[i] + 1$ and/or $q[i + 1] = q[i] + 1$, although other ``step patterns'' have been proposed \cite{muller2007dynamic, sakoe1978dynamic}.
 
 From the above definition, it is clear that there are many design choices to be made:
 \begin{description}[topsep=1pt,itemsep=-1pt,leftmargin=5pt]
