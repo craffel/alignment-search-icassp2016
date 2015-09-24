@@ -180,7 +180,7 @@ Using the median distance made this penalty adaptive to different feature repres
 \item[Gully and band path constraint:] We allowed the gully to take any value in $[0, 1]$ and optionally enforced the band path constraint.
 \end{description}
 This space subsumes most of the systems discussed in Section \ref{sec:dtw}.
-All feature extraction was realized with \texttt{librosa} \cite{mcfee2015librosa}.
+All feature extraction was realized with \texttt{librosa} \cite{mcfee2015librosa, mcfee2015librosa_scipy}.
 
 When performing Bayesian optimization, it is helpful to ``seed'' the optimization with objective values for many randomly-chosen parameter settings to ensure that the optimization thoroughly explores the possible parameter space.
 We computed the accuracy for 10,000 randomly configured alignment systems and seeded the optimizer with the 100 systems which achieved the lowest mean error.
