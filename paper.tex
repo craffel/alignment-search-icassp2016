@@ -17,7 +17,7 @@
 
 \begin{abstract}
 Dynamic time warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of music to corresponding MIDI transcriptions.
-The performance of DTW-based approaches in this domain is heavily affected by factors such as the representation used for the audio and MIDI data, and DTW's adjustable parameters.
+The performance of DTW-based approaches in this domain is heavily affected by factors such as the representation used for the audio and MIDI data and DTW's adjustable parameters.
 We investigate optimizing the design of DTW-based alignment and matching systems.
 Our approach uses Bayesian optimization to tune system design and parameters over a synthetically-created dataset of audio and MIDI pairs.
 We then perform an exhaustive search over DTW score normalization techniques to find the optimal method for reporting a reliable alignment confidence score, as required in matching tasks.
@@ -40,7 +40,7 @@ In both scenarios, it is of great value to produce an alignment confidence score
 
 ost previous research has focused on systems meant for either alignment or matching but not both.
 In the context of MIDI-to-audio alignment, a wide variety of techniques have been proposed to determine a correspondence between discrete times in the audio and MIDI files.
-While some approaches use edit distance metrics such as Smith-Waterman \cite{ewert2012towards} and Needleman-Wunsch \cite{grachten2013automatic}, the most common approach is Dynamic Time Warping (DTW) \cite{muller2007dynamic}.
+While some approaches use edit distance metrics such as Smith-Waterman \cite{ewert2012towards} and Needleman-Wunsch \cite{grachten2013automatic}, the most common approach is dynamic time warping (DTW) \cite{muller2007dynamic}.
 First proposed for comparing speech utterances \cite{sakoe1978dynamic}, DTW uses dynamic programming to find a monotonic alignment such that the sum of a distance-like cost between aligned feature vectors is minimized.
 This property makes it well-suited for audio-to-MIDI alignment when we expect that the MIDI is an accurate continuous transcription (i.e.\ without out-of-sequence or incorrect sections).
 
@@ -50,7 +50,7 @@ In the context of MIDI and audio files, \cite{hu2003polyphonic} evaluated DTW's 
 
 Despite its widespread use, DTW's success can be highly dependent on its exact formulation as well as system design choices such as the feature representation and the local distance metric used.
 To our knowledge, there has been no large-scale quantitative comparison of different DTW-based alignment systems.
-This is likely due to the fact that evaluating its performance would require either a collection of MIDI and audio pairs for which the correct alignment is already known (which does not exist) or manual audition and rating of the output of the systems (which is time-consuming).
+This is likely due to the fact that evaluating a given system's performance would require either a collection of MIDI and audio pairs for which the correct alignment is already known (which does not exist) or manual audition and rating of the output of the systems (which is time-consuming).
 The present work aims to remedy this by searching across a large space of DTW designs to find the one which is optimal in terms of both alignment and matching accuracy.
 
 After giving an overview of typical DTW-based alignment systems (Section \ref{sec:dtw}), we propose a method for creating a synthetic dataset of MIDI-audio pairs by applying realistic corruptions to MIDI files, allowing us to know a priori the correct alignment (Section \ref{sec:synthetic}).
@@ -61,7 +61,7 @@ Finally, we perform a large-scale qualitative evaluation of our proposed alignme
 \label{sec:dtw}
 
 Suppose we are given two sequences of feature vectors $X \in \mathbb{R}^{M \times D}$ and $Y \in \mathbb{R}^{N \times D}$, where $D$ is the feature dimensionality and $M$ and $N$ are the number of feature vectors in $X$ and $Y$ respectively.
-Dynamic Time Warping produces two nondecreasing sequences $p, q \in \mathbb{N}^L$ which define the optimal alignment between $X$ and $Y$, such that $p[i] = n, q[i] = m$ implies that the $m$th feature vector in $X$ should be aligned to the $n$th in $Y$.
+Dynamic time warping produces two nondecreasing sequences $p, q \in \mathbb{N}^L$ which define the optimal alignment between $X$ and $Y$, such that $p[i] = n, q[i] = m$ implies that the $m$th feature vector in $X$ should be aligned to the $n$th in $Y$.
 In DTW, finding $p$ and $q$ involves solving the following minimization problem:
 $$
 p, q = \mathrm{arg}\min_{p, q} \sum_{i = 1}^{L} \|X[p[i]] - Y[q[i]]\|_2^2 + \Phi(i)
@@ -71,7 +71,7 @@ $\phi \ge 0$ is a constant which is used to discourage ``non-diagonal moves'', i
 This minimization problem can be solved in $\mathcal{O}(MN)$ time using dynamic programming \cite{sakoe1978dynamic}.
 Once $p$ and $q$ are found, the original MIDI file can be adjusted so that events which occur at $t_X[p[i]]$ are moved to $t_Y[q[i]]$, where $t_X \in \mathbb{R}^M, t_Y \in \mathbb{R}^N$ are the times corresponding to the feature vectors in $X$ and $Y$ respectively.
 
-Traditionally, DTW is constrained such that $p$ and $q$ span the entirety of $X$ and $Y$, i.e.\ $p[1] = q[1] = 1$ and $p[L] = N; q[L] = M$.
+Traditionally, DTW is constrained so that $p$ and $q$ span the entirety of $X$ and $Y$, i.e.\ $p[1] = q[1] = 1$ and $p[L] = N; q[L] = M$.
 However, audio-to-MIDI alignment systems typically allow subsequence matching (to handle, for example, the case of a MIDI file that covers only a portion of a song), where instead we only require that either $gN \le p[L] \le N$ or $gM \le q[L] \le M$.
 $g \in [0, 1]$ (the ``gully'') is a parameter which determines the proportion of the subsequence which must be successfully matched.
 In addition, the path is occasionally further constrained so that
@@ -94,7 +94,7 @@ Note that the spacing between feature vectors must be sufficiently small compare
 Occasionally, beat-synchronous feature vectors are used \cite{raffel2015large,ellis2013aligning}, which can reduce computation time and can produce accurate alignments provided that the beat tracking is correct.
 \item[Normalization:] In \cite{rakthanmanon2012searching}, it is argued that z-scoring (standardizing) the feature sequences is critical for data mining applications of DTW, which was used in audio-to-MIDI alignment in \cite{hu2003polyphonic}.
 In addition, various normalizations have been applied to the feature vectors in $X$ and $Y$ before computing their local distances.
-A common choice is normalizing by each vector by its $L^2$ norm, which is equivalent to using the cosine distance \cite{turetsky2003ground, ewert2012towards, raffel2015large, ellis2013aligning}.
+A common choice is normalizing each vector by its $L^2$ norm, which is equivalent to using the cosine distance \cite{turetsky2003ground, ewert2012towards, raffel2015large, ellis2013aligning}.
 \item[Penalty ($\phi$):] In many applications of DTW to audio-to-MIDI alignment, no additive penalty is used, which corresponds to setting $\phi = 0$.
 However, as long as the MIDI and audio files have consistent tempi, non-diagonal moves should be discouraged.
 In addition, it has been argued \cite{raffel2015large} that when the constraint $p[1] = 1, q[1] = 1$ is not enforced (which allows subsequence alignment), an additive penalty can be crucial to ensure that the entire subsequence is used, and so $\phi$ is set to the 90th percentile of the distances $\|X[n] - Y[m]\|_2^2$ for $m \in \{1, \ldots, M\}; n \in \{1, \ldots, N\}$.
@@ -132,7 +132,7 @@ Third, because it is common for a MIDI transcription to be missing an instrument
 Fourth, in all MIDI files, we randomly added 1 or -1 to the program number of each instrument.
 This simulated the fact that when comparing a synthesized MIDI file to an audio recording, the timbre of a synthesized MIDI instrument is always somewhat different from its real-world counterpart.
 Finally, for each note in each instrument, we multiplied the velocity by a random number sampled from $\mathcal{N}(1, \sigma_v)$ while keeping it in the MIDI velocity range $[1, 127]$.
-This was meant to further simulate differences in instrument characteristics in real-world vs. synthesized songs, and also simulated missing notes for large $\sigma_v$.
+This was meant to further simulate differences in instrument characteristics in real-world vs.\ synthesized songs, and also simulated missing notes for large $\sigma_v$.
 All MIDI data manipulations were realized with \texttt{pretty\char`_midi} \cite{raffel2014pretty_midi}.
 
 As described in Section \ref{sec:intro}, a DTW-based alignment system can serve two purposes: First, to align a MIDI transcription in time to an audio recording, and second, to produce a confidence score denoting the quality of the transcription or whether the MIDI file is a transcription of the recording at all.
@@ -176,7 +176,7 @@ In order to avoid local minima in the parameter space, we carried out 10 separat
 
 The best-performing alignment system achieved an objective value of $0.0181$, meaning that the average absolute error across the entire dataset was about 18 milliseconds.
 This is both close to the limit of the auditory temporal resolution and less than half of the time-scale resolution used for non-beat-synchronous feature vectors, so attaining a higher accuracy is likely unrealistic.
-A one-sample $t$-test was performed to determine how which systems gave alignment quality statistically equivalent to the best performance. Testing the per-pair scores rather than the mean error across all pairs gave better robustness to outliers.  Using a $p$-value of $0.05$ as the threshold returned 51 configurations of indistinguishable quaity.
+A one-sample $t$-test was performed to determine which systems gave alignment quality statistically equivalent to the best performance. Testing the per-pair scores rather than the mean error across all pairs gave better robustness to outliers.  Using a $p$-value of $0.05$ as the threshold returned 51 configurations of indistinguishable quaity.
 
 As a high-level overview of these systems, none used beat-synchronization or a path constraint and all of them used log-magnitude constant-Q spectra as a feature representation and set both the penalty median scale and ``gully'' close to 1.
 Almost all of these systems used $L^2$ normalization (resulting in a cosine distance for local feature comparisons); a few used $L^1$ normalization.
@@ -196,7 +196,7 @@ $$
 i.e.\ the mean distance between all pairs of frames over the entire aligned portion of both feature sequences.
 
 To choose an optimal confidence measure, we first aligned all of the MIDI/audio pairs in both the ``hard'' and ``easy'' datasets.
-Then, for every alignment system generated during our Bayesian optimization trials, we computed the confidence score for every MIDI/audio pair using all combinations of the normalization schemes listed above (with and without length normalization, diagonal penalties, and mean distance normalization) resulting in 8 possible confidence scores per file pair).
+Then, for every alignment system generated during our Bayesian optimization trials, we computed the confidence score for every MIDI/audio pair using all combinations of the normalization schemes listed above (with and without length normalization, diagonal penalties, and mean distance normalization) resulting in 8 possible confidence scores per file pair.
 Finally, we computed the Kendall rank correlation coefficient \cite{kendall1938new} between each confidence score and the mean absolute error produced by all alignment systems for every alignment pair in both datasets.
 A high correlation indicates that the system is able to accurately report the quality of its alignments.
 
@@ -232,6 +232,7 @@ We then listened to each aligned MIDI pair and annotated a score from 1-5 accord
 \item Perfect alignment and transcription
 \end{enumerate}
 For example, if a MIDI transcription was matched and successfully aligned to the correct song but was missing an instrument, a rating of 4 would be given; if the missing instrument caused the alignment to sound ``sloppy'', the rating would be 3 instead.
+To prevent biasing the results, we did not have access to the reported confidence score while rating a given aligned pair.
 
 \begin{figure}[t]
   \centering
@@ -252,7 +253,7 @@ The most common transcription issue for pairs rated 4 was a single missing instr
 
 Overall, our ``gold standard'' alignment system was able to successfully align most correctly-matched pairs and produced a reliable confidence score.
 Considering pairs rated 3-5 as ``correct'' matches, the resulting confidence scores achieve an area under the ROC curve of 0.983 (95\% confidence interval [.973, .991], calculated by 1000-sample bootstrap), indicating a high quality metric.
-Unfortunately, there were a few pairs rated 1 or 2 that still had small normalized DTW scores suggesting a successful alignment (visible as outliers in Figure \ref{fig:violin}); without these outliers, we could use a wider range of thresholds to obtain high-confidence alignments.  
+Unfortunately, there were a few pairs rated 1 or 2 that still had small normalized DTW scores suggesting a successful alignment (visible as outliers in Figure \ref{fig:violin}); without these outliers, we could use a wider range of thresholds to obtain high-confidence alignments.
 The most important remaining flaw is the relative insensitivity to missing instruments and embellishments.
 In summary, large-scale optimization over synthetic data has delivered a DTW-based system which is simple to implement and achieves accurate and reliable results for both alignment and matching.
 A high-level discussion of these results, with more figures and an implementation example of our ``gold standard'' system, is available online\footnote{abc}, as is all of the code used in these experiments \footnote{xyz}.
