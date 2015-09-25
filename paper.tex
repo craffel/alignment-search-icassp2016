@@ -138,7 +138,7 @@ All MIDI data manipulations were realized with \texttt{pretty\char`_midi} \cite{
 As described in Section \ref{sec:intro}, a DTW-based alignment system can serve two purposes: First, to align a MIDI transcription in time to an audio recording, and second, to produce a confidence score denoting the quality of the transcription or whether the MIDI file is a transcription of the recording at all.
 We therefore produced two sets of corrupted versions of the 1,000 MIDI files we collected, one to measure alignment performance, and one to evaluate confidence reporting.
 For the first (``easy'') set, we focused on corruption parameters corresponding to real-world conditions for a high-quality transcription, setting $\sigma_t = 5, p_r = .1, \sigma_v = .2$.
-For the second (``hard''), we set the corruption parameters so that the transcription was likely no longer valid, setting $\sigma_t = 20, p_r = .5, \sigma_v = 1$.
+For the second (``hard''), we set $\sigma_t = 20, p_r = .5, \sigma_v = 1$ so that the alignment task is sufficiently difficult to result in a significant number of incorrect alignments, which allows us to test whether an alignment system can automatically report failure.
 
 \section{Optimizing DTW-Based Alignment}
 \label{sec:optimizing}
@@ -186,7 +186,7 @@ There was no clear trend in the use of z-scoring.
 \label{sec:confidence}
 
 Having found alignment systems which achieve high accuracy on the ``easy'' dataset, we move on to  the question of computing reliable alignment confidence scores.
-As described in Section \ref{sec:dtw}, DTW provides a ``raw'' distance as the sum of distances between all aligned feature vectors.
+As described in Section \ref{sec:dtw}, DTW provides a ``raw'' distance as the sum of distances between all aligned feature vectors, such that a small distance denotes high confidence.
 This metric is inappropriate, however, when the number of aligned feature vectors varies from song to song; in this setting, the mean distance is usually used instead of the total distance.
 Furthermore, it's not  clear if the non-diagonal path penalties $\phi$ should be included in this distance.
 Finally, \cite{raffel2015large} advocates further normalizing this distance by
@@ -216,7 +216,7 @@ This ``gold standard'' system is straightforward to implement, and will be used 
 \section{Qualitative Evaluation on Real-World Data}
 \label{sec:qualitative}
 
-In the experiments described above, we have found a system which can provide both high accuracy and a useful metric on synthetic data.
+In the experiments described above, we have found a system which can provide both high accuracy and a useful confidence metric on synthetic data.
 To determine its applicability outside of synthetic contexts, we performed a large-scale qualitative evaluation on real-world data.
 The dataset used was a randomly chosen set of 500 MIDI/audio pairs from the ``clean MIDI dataset'' \cite{raffel2015large}, obtained by matching MIDI files with reliable metadata to entries in the Million Song Dataset \cite{bertin2011million} via a fuzzy text match.
 This collection comprises MIDI files with a full range of transcription qualities, and includes some pairs which are incorrectly matched due to failure of the text matching procedure.
@@ -232,12 +232,13 @@ We then listened to each aligned MIDI pair and annotated a score from 1-5 accord
 \item Perfect alignment and transcription
 \end{enumerate}
 For example, if a MIDI transcription was matched and successfully aligned to the correct song but was missing an instrument, a rating of 4 would be given; if the missing instrument caused the alignment to sound ``sloppy'', the rating would be 3 instead.
+Ideally, alignments with low confidence scores (normalized DTW distance) will be given higher ratings, and vice versa.
 To prevent biasing the results, we did not have access to the reported confidence score while rating a given aligned pair.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{violin.pdf}
-  \caption{Violin plot showing the distribution of confidence scores for each rating in our qualitative evaluation.
+  \caption{Violin plot (box plot with rotated kernel density estimates) showing the distribution of confidence scores for each rating in our qualitative evaluation.
 A smaller confidence score indicates a more successful alignment.
 The area of each violin corresponds to the number of pairs which had a given rating.
 Box plots in each violin show the median and upper and lower quartiles.}
@@ -247,7 +248,7 @@ Box plots in each violin show the median and upper and lower quartiles.}
 Figure \ref{fig:violin} shows the distributions of confidence scores for pairs assigned each of the five ratings.
 Apart from encountering many incorrect pairs (all of those rated 1), we also found that various transcription issues prevented successful alignments.
 A common issue for those pairs rated 2 was that the wrong section of the MIDI transcription was  matched to the audio, often due to different instrumentation, keys, or versions (e.g.\ the audio was a live version).
-any pairs rated 3 had multiple missing instruments, many musical embellishments, or occasionally the wrong tempo.
+Any pairs rated 3 had multiple missing instruments, many musical embellishments, or occasionally the wrong tempo.
 In addition, the large overlap between the confidence scores for pairs rated 4 and 5 indicates that our confidence score is largely invariant to minor transcription issues.
 The most common transcription issue for pairs rated 4 was a single missing instrument or minor embellishments, most often on the vocal track.
 
