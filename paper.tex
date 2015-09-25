@@ -16,7 +16,7 @@
 \maketitle
 
 \begin{abstract}
-Dynamic Time Warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of music to corresponding MIDI transcriptions.
+Dynamic time warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of music to corresponding MIDI transcriptions.
 The performance of DTW-based approaches in this domain is heavily affected by factors such as the representation used for the audio and MIDI data, and DTW's adjustable parameters.
 We investigate optimizing the design of DTW-based alignment and matching systems.
 Our approach uses Bayesian optimization to tune system design and parameters over a synthetically-created dataset of audio and MIDI pairs.
@@ -64,10 +64,9 @@ Suppose we are given two sequences of feature vectors $X \in \mathbb{R}^{M \time
 Dynamic Time Warping produces two nondecreasing sequences $p, q \in \mathbb{N}^L$ which define the optimal alignment between $X$ and $Y$, such that $p[i] = n, q[i] = m$ implies that the $m$th feature vector in $X$ should be aligned to the $n$th in $Y$.
 In DTW, finding $p$ and $q$ involves solving the following minimization problem:
 $$
-%p, q = \mathrm{arg}\min_{p, q} \sum_{i = 1}^{L} \|X[p[i]] - Y[q[i]]\|_2^2 + \Phi(p, q)
-p, q = \mathrm{arg}\min_{p, q} \sum_{i = 1}^{L} D(X[p[i]], Y[q[i]]) + \Phi(p, q)
+p, q = \mathrm{arg}\min_{p, q} \sum_{i = 1}^{L} \|X[p[i]] - Y[q[i]]\|_2^2 + \Phi(i)
 $$
-where $D(X,Y)$ is a frame-wise distance measure (such as squared Euclidean distance), and $\Phi(p, q)$ imposes additional costs on the paths; one common choice is to allow $p$ and $q$ to increase by 0 or 1 at each step in $i$, but to incur a cost of $\phi$ each time a zero-increase occurs; 
+where $\Phi(i)$ is $\phi$ when $p[i] = p[i - 1]$ or $q[i] = q[i - 1]$ and $0$ otherwise.
 $\phi \ge 0$ is a constant which is used to discourage ``non-diagonal moves'', i.e.\ indices in the path where one feature vector in one sequence is mapped to multiple vectors in the other.
 This minimization problem can be solved in $\mathcal{O}(MN)$ time using dynamic programming \cite{sakoe1978dynamic}.
 Once $p$ and $q$ are found, the original MIDI file can be adjusted so that events which occur at $t_X[p[i]]$ are moved to $t_Y[q[i]]$, where $t_X \in \mathbb{R}^M, t_Y \in \mathbb{R}^N$ are the times corresponding to the feature vectors in $X$ and $Y$ respectively.
@@ -82,25 +81,9 @@ $$
 for $i \in \{1, \ldots, L\}$ where $R = g\min(M, N)$ is the ``radius'', sometimes called the Sakoe-Chiba band \cite{sakoe1978dynamic}.
 A further constraint on $p$ and $q$ is monotonicity; audio to MIDI alignment systems typically enforce this by requiring $p[i + 1] = p[i] + 1$ and/or $q[i + 1] = q[i] + 1$, although other ``step patterns'' have been proposed \cite{muller2007dynamic, sakoe1978dynamic}.
 
-%A further constraint on $p$ and $q$ is monotonicity, i.e.\ that
-%$$
-%p[i + 1] \ge p[i], q[i + 1] \ge q[i] \; \forall i
-%$$
-%This can be enforced by allowing a specific ``step pattern''; while many exist \cite{muller2007dynamic, sakoe1978dynamic}, to our knowledge the only pattern used in audio to MIDI alignment simply requires that
-%$$
-%(p[i + 1], q[i + 1]) \in \begin{cases}
-%(p[i] + 1, q[i] + 1)\\
-%(p[i], q[i] + 1)\\
-%(p[i] + 1, q[i])
-%\end{cases}
-%$$
-%% I think it would be better to include monotonicity at the top, and to combine the description of allowable steps with the different costs of different steps, but this is OK.
-
 Design choices differentiating DTW systems include:
-%From the above definition, it is clear that there are many design choices to be made:
 \begin{description}[topsep=1pt,itemsep=-1pt,leftmargin=5pt]
 \item[Feature representation ($X$ and $Y$):] Prior to alignment, audio and MIDI sequences must be converted to an intermediate representation where their distance can be computed.
-% Peak structure distance is not L2, and does not map both to the same domain.
 This is often done by synthesizing the MIDI file to obtain an audio signal and computing a common spectral transform of the audio recording and synthesized MIDI audio.
 Chroma vectors, which represent the amount of energy in each semitone summed across octaves \cite{fujishima1999realtime} are a common choice \cite{hu2003polyphonic, ewert2012towards}.
 A constant-Q transform (CQT), which represents the amount of energy in logarithmically spaced bins \cite{brown1991calculation} has also been used \cite{raffel2015large, dixon2005match, ellis2013aligning}.
@@ -120,7 +103,6 @@ In \cite{ellis2013aligning}, a fixed value of $\phi = .5$ is used.
 A value of $g$ which is close to 1 will afford some tolerance to the possibility that the beginning or end of the MIDI transcription is incorrect (e.g.\ a fade-out or lead-in), so \cite{ellis2013aligning} sets $g = .7$ and \cite{raffel2015large} sets $g = .95$.
 In data mining applications \cite{ratanamahatana2004everything} it is argued that the band radius path constraint both reduces computational complexity and results in more reliable alignments by avoiding paths with many non-diagonal moves.
 \end{description}
-% g handles differences in the end, but not in the beginning...
 
 \section{Creating a Synthetic Alignment Dataset}
 \label{sec:synthetic}
@@ -135,13 +117,15 @@ When applying the corruptions, we keep track of the correct adjustments needed t
 
 To create this dataset, we first collected 1,000 MIDI files which were transcriptions of Western popular music songs.
 We then applied the following series of transformations, based on our experience with common differences between MIDI transcriptions and audio recordings:
-First, to simulate differences in tempo, we adjusted the timing in each MIDI file by a low-frequency length-$N$ random signal, generated as
-\begin{multline*}
-%r[n] = \sum_{k = 0}^{N - 1} \mathcal{N}(0, \sigma_t) e^{j2\pi kn/N - n}, n \in \{1, \ldots, N\}
-r[n] = \sum_{k = 0}^{N - 1} \mathcal{N}(0, \sigma_t) \cos(j2\pi kn/N) \\
-+ \mathcal{N}(0, \sigma_t) \sin(j2\pi kn/N) \quad \quad n \in \{1, \ldots, N\}
-\end{multline*}
-i.e.\ the inverse Fourier transform of an exponentially decaying Gaussian-distributed random spectra with standard deviation $\sigma_r$.
+First, to simulate differences in tempo, we adjusted the timing in each MIDI file by a low-frequency length-$N$ random signal $r$, defined as
+\begin{align*}
+R[k] &= \begin{cases}
+\mathcal{N}(0, \sigma_t) e^{-k}, &k \in \{0, \ldots, N\}\\
+R[2N - k], &k \in \{N + 1, \ldots, 2N - 1\}
+\end{cases}\\
+r[n] &= \sum_{k = 0}^{2N - 1} R[k]e^{j\pi kn/N}, n \in \{0, N - 1\}
+\end{align*}
+i.e.\ the inverse discrete Fourier transform of an exponentially decaying Gaussian-distributed random spectrum with standard deviation $\sigma_r$.
 Second, the first 10\% and last 10\% of the transcription were each cropped out with probability 50\%, which simulates the MIDI file being an incomplete transcription.
 In addition, 1\% of each transcription was cut out at a random location with 10\% probability, which simulates a missing measure.
 Third, because it is common for a MIDI transcription to be missing an instrument (for example, karaoke versions of songs, in which the lead vocal line has been deleted, are frequently distributed as MIDI files), we removed each instrument track in each MIDI file with probability $p_r$, making sure never to remove all instruments.
@@ -155,7 +139,6 @@ As described in Section \ref{sec:intro}, a DTW-based alignment system can serve 
 We therefore produced two sets of corrupted versions of the 1,000 MIDI files we collected, one to measure alignment performance, and one to evaluate confidence reporting.
 For the first (``easy'') set, we focused on corruption parameters corresponding to real-world conditions for a high-quality transcription, setting $\sigma_t = 5, p_r = .1, \sigma_v = .2$.
 For the second (``hard''), we set the corruption parameters so that the transcription was likely no longer valid, setting $\sigma_t = 20, p_r = .5, \sigma_v = 1$.
-% Don't understand.  If we screw it up a lot, what's the correct answer?
 
 \section{Optimizing DTW-Based Alignment}
 \label{sec:optimizing}
@@ -167,15 +150,12 @@ $$
 \frac{1}{L}\sum_{i = 1}^{L} \min(|t_X[p[i]] - \hat{t}_X[q[i]]|, 0.5)
 $$
 where $\hat{t}_X$ is the ground-truth ``warped'' time scale.  We average this measure across the test set.
-%To compute the accuracy of a given alignment system, we can compute the mean of this metric across all pairs in the dataset.
 
 Rapid calculation of this precise metric (over the ``easy'' test set) allows us to perform large-scale comparisons of different parameter settings.
 To decide which settings to try, we use Bayesian optimization, which approximates the relationship between parameter settings and objective values as a Gaussian process.
 Using this formulation, Bayesian optimization can automatically propose new alignment systems based on the performance of previously-evaluated systems.
-%As a performance objective, we used the mean of mean absolute errors across the entire ``easy'' dataset.
 A more thorough discussion can be found in \cite{snoek2012practical}, which is the framework used in this experiment.
 
-%Before applying Bayesian optimization, we must define a parameter space to search over.
 Based on the design choices outlined in Section \ref{sec:dtw}, we chose to optimize over the following parameter space:
 \begin{description}[topsep=1pt,itemsep=-1pt,leftmargin=5pt]
 \item[Feature representation:] We used either chroma vectors or constant-Q spectra.
@@ -196,7 +176,6 @@ In order to avoid local minima in the parameter space, we carried out 10 separat
 
 The best-performing alignment system achieved an objective value of $0.0181$, meaning that the average absolute error across the entire dataset was about 18 milliseconds.
 This is both close to the limit of the auditory temporal resolution and less than half of the time-scale resolution used for non-beat-synchronous feature vectors, so attaining a higher accuracy is likely unrealistic.
-%To find systems with comparably high performance, we performed a
 A one-sample $t$-test was performed to determine how which systems gave alignment quality statistically equivalent to the best performance. Testing the per-pair scores rather than the mean error across all pairs gave better robustness to outliers.  Using a $p$-value of $0.05$ as the threshold returned 51 configurations of indistinguishable quaity.
 
 As a high-level overview of these systems, none used beat-synchronization or a path constraint and all of them used log-magnitude constant-Q spectra as a feature representation and set both the penalty median scale and ``gully'' close to 1.
@@ -265,11 +244,10 @@ Box plots in each violin show the median and upper and lower quartiles.}
 \end{figure}
 
 Figure \ref{fig:violin} shows the distributions of confidence scores for pairs assigned each of the five ratings.
-%In an ideal world, all MIDI and audio files would be paired correctly, and all MIDI transcriptions would be perfect. However, a
 Apart from encountering many incorrect pairs (all of those rated 1), we also found that various transcription issues prevented successful alignments.
 A common issue for those pairs rated 2 was that the wrong section of the MIDI transcription was  matched to the audio, often due to different instrumentation, keys, or versions (e.g.\ the audio was a live version).
 any pairs rated 3 had multiple missing instruments, many musical embellishments, or occasionally the wrong tempo.
-In addition, the large overlap between the confidence scores for pairs rated 4 and 5 indicates that our confidence score is largely invariant to minor transcription issues. %, which is not ideal.
+In addition, the large overlap between the confidence scores for pairs rated 4 and 5 indicates that our confidence score is largely invariant to minor transcription issues.
 The most common transcription issue for pairs rated 4 was a single missing instrument or minor embellishments, most often on the vocal track.
 
 Overall, our ``gold standard'' alignment system was able to successfully align most correctly-matched pairs and produced a reliable confidence score.
