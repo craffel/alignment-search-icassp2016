@@ -16,12 +16,13 @@
 \maketitle
 
 \begin{abstract}
-Dynamic time warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of music to corresponding MIDI transcriptions but its performance is heavily affected by factors such as the representation used for the audio and MIDI data and its adjustable parameters.
+Dynamic time warping (DTW) has proven to be an extremely effective method for both aligning and matching recordings of music to corresponding MIDI transcriptions.
+However, its performance is heavily affected by factors such as the representation used for the audio and MIDI data and its adjustable parameters.
 We therefore investigate automatically optimizing the design of DTW-based alignment and matching systems.
 Our approach uses Bayesian optimization to tune system design and parameters over a synthetically-created dataset of audio and MIDI pairs.
 We then perform an exhaustive search over DTW score normalization techniques to find the optimal method for reporting a reliable alignment confidence score, as required in matching tasks.
 This results in a DTW-based system which is conceptually simple and highly accurate at both alignment and matching.
-We verified that this system achieves high performance in a large-scale qualitative evaluation of results on real-world data.
+We verified that this system achieves high performance in a large-scale qualitative evaluation of real-world alignments.
 \end{abstract}
 
 \begin{keywords}
@@ -111,15 +112,16 @@ Previous research has typically involved manually tuning alignment parameters ba
 Because this method only facilitates small-scale comparisons, there is an obvious question of what parameter settings would yield the best general-purpose alignment system.
 Unfortunately, manual audition of even a tiny subset of possible parameter settings on a modestly-sized collection of paired MIDI and audio files is infeasible, let alone a collection large enough to make substantive judgements about the general performance of a given system.
 Furthermore, automatic evaluation has been blocked by the lack of a ground-truth dataset of ``correct'' alignments.
-We therefore propose a method for synthetically creating a collection of MIDI/audio pairs with known alignments by applying a series of corruptions to MIDI files to resemble real-world conditions.
-When applying the corruptions, we keep track of the correct adjustments needed to restore the corrupted MIDIs back to the correct timebase, which allows us to rapidly and automatically evaluate a huge number of possible systems.
+We therefore propose a method for synthetically creating MIDI/audio pairs with known alignments by applying a series of corruptions to MIDI files to resemble real-world conditions.
+When applying the corruptions, we keep track of the correct adjustments needed to correctly align the corrupted MIDIs, which allows us to rapidly and automatically evaluate a huge number of possible systems.
 
 To create this dataset, we first collected 1,000 MIDI files which were transcriptions of Western popular music songs.
 We then applied the following series of transformations, based on our experience with common differences between MIDI transcriptions and audio recordings:
 First, to simulate differences in tempo, we adjusted the timing in each MIDI file by a low-frequency length-$N$ random signal $r$, defined as
 \begin{align*}
+s[k] &\sim \mathcal{N}(0, \sigma_t), k \in \{0, \ldots, N\}\\
 R[k] &= \begin{cases}
-\mathcal{N}(0, \sigma_t) e^{-k}, &k \in \{0, \ldots, N\}\\
+s[k]e^{-k}, &k \in \{0, \ldots, N\}\\
 R[2N - k], &k \in \{N + 1, \ldots, 2N - 1\}
 \end{cases}\\
 r[n] &= \sum_{k = 0}^{2N - 1} R[k]e^{j\pi kn/N}, n \in \{0, N - 1\}
@@ -161,7 +163,7 @@ Based on the design choices outlined in Section \ref{sec:dtw}, we chose to optim
 The constant-Q spectra spanned 4 octaves, starting from MIDI note C3 (65.4 Hz) with 12 bins per octave.
 In preliminary experiments, we found that all of the best-performing alignment systems used log-magnitude features regardless of whether chroma vectors or constant-Q spectra were used, so we computed log-magnitude features in all experiments.
 \item[Time scale:] We either computed feature vectors every 46 milliseconds or utilized beat-synchronous features.
-\item[Normalization:] We optionally z-scored the feature vectors, and normalized feature vectors by their $L^1$, $L^2$, $L^\infty$ (max) norm, or not at all.
+\item[Normalization:] We optionally z-scored the feature vectors, and normalized them by their $L^1$, $L^2$, $L^\infty$ (max) norm, or not at all.
 \item[Penalty:] For the penalty, we optimized a scale in $[0, 3]$ to apply to the median distance between all pairs of feature vectors in $X$ and $Y$.
 Using the median distance made this penalty adaptive to different feature representations and normalization schemes.
 \item[Gully and band path constraint:] We allowed the gully to take any value in $[0, 1]$ and optionally enforced the band path constraint.
@@ -175,7 +177,7 @@ In order to avoid local minima in the parameter space, we carried out 10 differe
 
 The best-performing alignment system achieved an objective value of $0.0181$, meaning that the average absolute error across the entire dataset was about 18 milliseconds.
 This is both close to the limit of the auditory temporal resolution and less than half of the time-scale resolution used for non-beat-synchronous feature vectors, so attaining a higher accuracy is likely unrealistic.
-A one-sample $t$-test was performed to determine which systems gave alignment quality statistically equivalent to the best performance. Testing the per-pair scores rather than the mean error across all pairs gave better robustness to outliers.  Using a $p$-value of $0.05$ as the threshold returned 51 configurations of indistinguishable quaity.
+A one-sample $t$-test was performed to determine which systems gave alignment quality statistically equivalent to the best performance. Testing the per-pair scores rather than the mean error across all pairs gave better robustness to outliers.  Using a $p$-value of $0.05$ as the threshold returned 51 configurations of indistinguishable quality.
 
 As a high-level overview of these systems, none used beat-synchronization or a path constraint and all of them used log-magnitude constant-Q spectra as a feature representation and set both the penalty median scale and ``gully'' close to 1.
 Almost all of these systems used $L^2$ normalization (resulting in a cosine distance for local feature comparisons); a few used $L^1$ normalization.
@@ -208,7 +210,7 @@ As a final step in producing a ``gold standard'' alignment system, we decided to
 We chose the following design: For a feature representation, we used log-magnitude constant-Q transforms computed on the non-beat-synchronous time scale described in Section \ref{sec:optimizing}.
 We normalized the spectra by their $L^2$ norm and did not z-score them.
 We chose a penalty $\phi$ as the median distance of all pairs of frames and used a gully parameter $g$ of $0.96$.
-This system achieved a mean absolute alignment error on the ``easy'' dataset of 0.0188 sec, with alignment errors which were not significantly different from the best-performing system.
+This system achieved a mean absolute alignment error on the ``easy'' dataset of 0.0188, with alignment errors which were not significantly different from the best-performing system.
 By normalizing the DTW distance (including penalties) by the path length and the mean distance across aligned portions, we achieved a rank correlation between confidence and accuracy of 0.700.
 This ``gold standard'' system is straightforward to implement, and will be used for the remainder of this work.
 
@@ -256,7 +258,7 @@ Considering pairs rated 3-5 as ``correct'' matches, the resulting confidence sco
 Unfortunately, there were a few pairs rated 1 or 2 that still had small normalized DTW scores suggesting a successful alignment (visible as outliers in Figure \ref{fig:violin}); without these outliers, we could use a wider range of thresholds to obtain high-confidence alignments.
 The most important remaining flaw is the relative insensitivity to missing instruments and embellishments.
 In summary, large-scale optimization over synthetic data has delivered a DTW-based system which is simple to implement and achieves accurate and reliable results for both alignment and matching.
-A high-level discussion of these results, with more figures and an implementation of our ``gold standard'' system, is available online\footnote{\href{http://bit.ly/alignment-overview}{\texttt{http://bit.ly/alignment-overview}}}, as is the code used in these experiments \footnote{\href{https://github.com/craffel/alignment-search}{\texttt{https://github.com/craffel/alignment-search}}}.
+A high-level discussion of these results, with more figures and an implementation of our ``gold standard'' system, is available online\footnote{\href{http://bit.ly/alignment-overview}{\texttt{http://bit.ly/alignment-overview}}}, as is the code used in these experiments.\footnote{\href{https://github.com/craffel/alignment-search}{\texttt{https://github.com/craffel/alignment-search}}} 
 
 \bibliographystyle{IEEEbib}
 \bibliography{refs}
