@@ -246,10 +246,10 @@ Box plots in each violin show the median and upper and lower quartiles.}
 \end{figure}
 
 Figure \ref{fig:violin} shows the distributions of confidence scores for pairs assigned each of the five ratings.
-Apart from encountering many incorrect pairs (all of those rated 1), we also found that various transcription issues prevented successful alignments.
-A common issue for those pairs rated 2 was that the wrong section of the MIDI transcription was  matched to the audio, often due to different instrumentation, keys, or versions (e.g.\ the audio was a live version).
+Apart from encountering many incorrect pairs (rated 1), we also found that various transcription issues prevented successful alignments.
+A common issue for those pairs rated 2 was that the wrong section of the MIDI transcription was  matched to the audio, often due to different instrumentation, keys, or versions (e.g.\ the audio was a remix).
 Any pairs rated 3 had multiple missing instruments, many musical embellishments, or occasionally the wrong tempo.
-In addition, the large overlap between the confidence scores for pairs rated 4 and 5 indicates that our confidence score is largely invariant to minor transcription issues.
+In addition, the overlap between the confidence scores for pairs rated 4 and 5 indicates that our confidence score is largely invariant to minor transcription issues.
 The most common transcription issue for pairs rated 4 was a single missing instrument or minor embellishments, most often on the vocal track.
 
 Overall, our ``gold standard'' alignment system was able to successfully align most correctly-matched pairs and produced a reliable confidence score.
@@ -257,7 +257,7 @@ Considering pairs rated 3-5 as ``correct'' matches, the resulting confidence sco
 Unfortunately, there were a few pairs rated 1 or 2 that still had small normalized DTW scores suggesting a successful alignment (visible as outliers in Figure \ref{fig:violin}); without these outliers, we could use a wider range of thresholds to obtain high-confidence alignments.
 The most important remaining flaw is the relative insensitivity to missing instruments and embellishments.
 In summary, large-scale optimization over synthetic data has delivered a DTW-based system which is simple to implement and achieves accurate and reliable results for both alignment and matching.
-A high-level discussion of these results, with more figures and an implementation example of our ``gold standard'' system, is available online\footnote{abc}, as is all of the code used in these experiments \footnote{xyz}.
+A high-level discussion of these results, with more figures and an implementation of our ``gold standard'' system, is available online\footnote{abc}, as is the code used in these experiments \footnote{xyz}.
 
 \bibliographystyle{IEEEbib}
 \bibliography{refs}
