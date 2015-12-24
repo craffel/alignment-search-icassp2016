@@ -224,7 +224,7 @@ This collection comprises MIDI files with a full range of transcription qualitie
 By manually evaluating whether each resulting alignment was successful, we can determine how accurately the ``gold standard'' system performs alignments and how reliable the reported confidence scores are.
 
 After aligning all pairs in this dataset, we synthesized the resulting aligned MIDI files and created stereo recordings with the aligned synthesized MIDI audio in one channel and the original audio recording in the other.
-We then listened to each aligned MIDI pair and annotated a score from 1-5 according to the alignment accuracy, as follows:
+We then listened to each aligned MIDI pair and annotated a score from 1-5 as follows:
 \begin{enumerate}[topsep=1pt,itemsep=-1pt]
 \item MIDI and audio file are incorrectly matched
 \item Alignment failed due to major differences
@@ -255,14 +255,14 @@ The most common transcription issue for pairs rated 4 was a single missing instr
 
 Overall, our ``gold standard'' alignment system was able to successfully align most correctly-matched pairs and produced a reliable confidence score.
 Considering pairs rated 3-5 as ``correct'' matches, the resulting confidence scores achieve an area under the ROC curve of 0.981 (95\% confidence interval [.973, .989], calculated by 1000-sample bootstrap), indicating a high quality measure.
-Unfortunately, there were a few pairs rated 1 or 2 that still had small normalized DTW scores suggesting a successful alignment (visible as outliers in Figure \ref{fig:violin}); without these outliers, we could use a wider range of thresholds to obtain high-confidence alignments.
+Unfortunately, there were a few pairs rated 1 or 2 that still had small normalized DTW scores suggesting a successful alignment; without these outliers, we could use a wider range of thresholds to obtain high-confidence alignments.
 The most important remaining flaw is the relative insensitivity to missing instruments and embellishments.
+
 In summary, large-scale optimization over synthetic data has delivered a DTW-based system which is simple to implement and achieves accurate and reliable results for both alignment and matching.
-A high-level discussion of these results, with more figures and an implementation of our ``gold standard'' system, is available online,\footnote{\href{http://bit.ly/alignment-overview}{\texttt{http://bit.ly/alignment-overview}}} as is the code used in these experiments.\footnote{\href{https://github.com/craffel/alignment-search}{\texttt{https://github.com/craffel/alignment-search}}} 
+A high-level discussion of this paper, with more figures and an implementation of our ``gold standard'' system, is available online,\footnote{\href{http://bit.ly/alignment-overview}{\texttt{http://bit.ly/alignment-overview}}} as is the code used in these experiments.\footnote{\href{https://github.com/craffel/alignment-search}{\texttt{https://github.com/craffel/alignment-search}}} 
+We thank Hilary Mogul for preliminary work and Dawen Liang for helpful discussion.
 
 \bibliographystyle{IEEEbib}
 \bibliography{refs}
 
 \end{document}
-
-
