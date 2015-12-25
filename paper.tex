@@ -44,7 +44,7 @@ While some approaches use edit distance measures such as Smith-Waterman \cite{ew
 First proposed for comparing speech utterances \cite{sakoe1978dynamic}, DTW uses dynamic programming to find a monotonic alignment such that the sum of a distance-like cost between aligned feature vectors is minimized.
 This property makes it well-suited for audio-to-MIDI alignment when we expect that the MIDI is an accurate continuous transcription (i.e.\ without out-of-sequence or incorrect sections).
 
-Since the total distance between pairs of feature vectors gives a single global value, one nice outcome of DTW is a natural measure of the ``similarity'' between two sequences.
+Since the total distance between aligned pairs of feature vectors gives a single global value, one nice outcome of DTW is a natural measure of the ``similarity'' between two sequences.
 In fact, DTW has seen extensive use as a way of measuring sequence similarity in the data mining literature \cite{berndt1994using}.
 In the context of MIDI and audio files, \cite{hu2003polyphonic} evaluated DTW's effectiveness at matching a small collection of Beatles MIDIs to recordings of Beatles songs.
 
@@ -97,7 +97,7 @@ In addition, various normalizations have been applied to the feature vectors in 
 A common choice is normalizing each vector by its $L^2$ norm, which is equivalent to using the cosine distance \cite{turetsky2003ground, ewert2012towards, raffel2015large, ellis2013aligning}.
 \item[Penalty ($\phi$):] In many applications of DTW to audio-to-MIDI alignment, no additive penalty is used, which corresponds to setting $\phi = 0$.
 However, as long as the MIDI and audio files have consistent tempi, non-diagonal moves should be discouraged.
-In addition, it has been argued \cite{raffel2015large} that when the constraint $p[1] = 1, q[1] = 1$ is not enforced (which allows subsequence alignment), an additive penalty can be crucial to ensure that the entire subsequence is used, and so $\phi$ is set to the 90th percentile of the distances $\|X[n] - Y[m]\|_2^2$ for $m \in \{1, \ldots, M\}; n \in \{1, \ldots, N\}$.
+In addition, it has been argued \cite{raffel2015large} that when subsequence alignment is allowed, an additive penalty can be crucial to ensure that the entire subsequence is used, and so $\phi$ is set to the 90th percentile of the distances $\|X[n] - Y[m]\|_2^2$ for $m \in \{1, \ldots, M\}; n \in \{1, \ldots, N\}$.
 In \cite{ellis2013aligning}, a fixed value of $\phi = .5$ is used.
 \item[Gully ($g$) and band path constraint:] The ``gully'' and band path constraint are also often omitted, which corresponds to setting $g = 1$.
 A value of $g$ which is close to 1 will afford some tolerance to the possibility that the beginning or end of the MIDI transcription is incorrect (e.g.\ a fade-out or lead-in), so \cite{ellis2013aligning} sets $g = .7$ and \cite{raffel2015large} sets $g = .95$.
