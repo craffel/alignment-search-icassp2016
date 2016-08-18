@@ -124,9 +124,9 @@ R[k] &= \begin{cases}
 s[k]e^{-k}, &k \in \{0, \ldots, N\}\\
 R[2N - k], &k \in \{N + 1, \ldots, 2N - 1\}
 \end{cases}\\
-r[n] &= \sum_{k = 0}^{2N - 1} R[k]e^{j\pi kn/N}, n \in \{0, N - 1\}
+r[n] &= \sum_{k = 0}^{2N - 1} R[k]e^{j\pi kn/N}, n \in \{0, \ldots, N - 1\}
 \end{align*}
-i.e.\ the inverse discrete Fourier transform of an exponentially decaying Gaussian-distributed random spectrum with standard deviation $\sigma_r$.
+i.e.\ the inverse discrete Fourier transform of an exponentially decaying Gaussian-distributed random spectrum with standard deviation $\sigma_t$.
 Second, the first 10\% and last 10\% of the transcription were each cropped out with probability 50\%, which simulates the MIDI file being an incomplete transcription.
 In addition, 1\% of each transcription was cut out at a random location with 10\% probability, which simulates a missing measure.
 Third, because it is common for a MIDI transcription to be missing an instrument (for example, karaoke versions of songs, in which the lead vocal line has been deleted, are frequently distributed as MIDI files), we removed each instrument track in each MIDI file with probability $p_r$, making sure never to remove all instruments.
@@ -160,7 +160,7 @@ A more thorough discussion can be found in \cite{snoek2012practical}, which is t
 Based on the design choices outlined in Section \ref{sec:dtw}, we chose to optimize over the following parameter space:
 \begin{description}[topsep=1pt,itemsep=-1pt,leftmargin=5pt]
 \item[Feature representation:] We used either chroma vectors or constant-Q spectra.
-The constant-Q spectra spanned 4 octaves, starting from MIDI note C3 (65.4 Hz) with 12 bins per octave.
+The constant-Q spectra spanned 4 octaves, starting from MIDI note C2 (65.4 Hz) with 12 bins per octave.
 In preliminary experiments, we found that all of the best-performing alignment systems used log-magnitude features regardless of whether chroma vectors or constant-Q spectra were used, so we computed log-magnitude features in all experiments.
 \item[Time scale:] We either computed feature vectors every 46 milliseconds or utilized beat-synchronous features.
 \item[Normalization:] We optionally z-scored the feature vectors, and normalized them by their $L^1$, $L^2$, $L^\infty$ (max) norm, or not at all.
